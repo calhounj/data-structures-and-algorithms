@@ -95,3 +95,97 @@ int enqueue(Queue *q, int val) {
     q->size++;
     return 0;
 }
+
+/* Look at the front of the queue and place front node's value in out.
+ * Return -1 on failure, 0 on success. */
+int queue_peek(const Queue *q, int *out) {
+    /* Input validation */
+    if (q == NULL || out == NULL) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    /* In main, given the return value of -1, we need to check why.*/
+    if (q->front == NULL)
+        return -1;
+
+    /* q is not empty, peek at the front. */
+    *out = q->front->value;
+    return 0;
+}
+
+/* dequeue, "serve the customer." Remove the front of the queue and if
+ * *out is provided, return the value held at that node. Return 0 on success
+ * and -1 if supplied an empty queue.*/
+int dequeue(Queue *q, int *out) {
+    /* Input validation */
+    if (q == NULL) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    /* Check for empty Queue. */
+    if (q->front == NULL)
+        return -1;
+
+    QueueNode *victim = q->front;
+    if (out != NULL)
+        *out = victim->value;
+
+    q->front = victim->next;
+    /* If queue is a single node then front now points to NULL and rear points
+     * to the node we are about to free. Satisfy invariant before we free. */
+    if (q->size == 1)
+        q->rear = NULL;
+
+    /* All safe to free and decrement. */
+    free(victim);
+    q->size--;
+    return 0;
+}
+
+/* Free an entire queue. */
+void queue_destroy(Queue *q) {
+    /* Input Validation */
+    if (q == NULL) {
+        errno = EINVAL;
+        return;
+    }
+
+    if (q->front != NULL) {
+        QueueNode *curr = q->front;
+        while (curr != NULL) {
+            QueueNode *victim = curr;
+            curr = victim->next;
+            free(victim);
+        }
+    }
+
+    q->front = NULL;
+    q->rear = NULL;
+    q->size = 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
