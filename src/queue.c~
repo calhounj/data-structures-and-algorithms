@@ -61,26 +61,28 @@ void queue_print(const Queue *q) {
         printf("front [");
         const QueueNode *curr = q->front;   /* Remember const! */
         while (curr != q->rear) {
-            printf("%d -> ", curr->value);
+            printf("%p -> ", curr->data);
             curr = curr->next;
         }
-        printf("%d] rear\n", curr->value);
+        printf("%p] rear\n", curr->data);
     }
 }
 
 /* Classic enqueue function: add to the rear.*/
-int enqueue(Queue *q, int val) {
+int enqueue(Queue *q, void *data) {
     /* Validate input */
     if (q == NULL) {
         errno = EINVAL;
         return -1;
     }
 
+    /* Allocate node */
     QueueNode *node = malloc(sizeof(*node));
     if (node == NULL)
         return -1;
 
-    node->value = val;
+    /* Store pointer */
+    node->data = data;
     node->next = NULL;
 
     if (q->size == 0) {
@@ -96,9 +98,9 @@ int enqueue(Queue *q, int val) {
     return 0;
 }
 
-/* Look at the front of the queue and place front node's value in out.
+/* Look at the front of the queue and place front node's data pointer in out.
  * Return -1 on failure, 0 on success. */
-int queue_peek(const Queue *q, int *out) {
+int queue_peek(const Queue *q, void **out) {
     /* Input validation */
     if (q == NULL || out == NULL) {
         errno = EINVAL;
@@ -110,14 +112,14 @@ int queue_peek(const Queue *q, int *out) {
         return -1;
 
     /* q is not empty, peek at the front. */
-    *out = q->front->value;
+    *out = q->front->data;
     return 0;
 }
 
 /* dequeue, "serve the customer." Remove the front of the queue and if
- * *out is provided, return the value held at that node. Return 0 on success
- * and -1 if supplied an empty queue.*/
-int dequeue(Queue *q, int *out) {
+ * *out is provided, return the data pointer held at that node. Return 0 on
+ * success and -1 if supplied an empty queue.*/
+int dequeue(Queue *q, void **out) {
     /* Input validation */
     if (q == NULL) {
         errno = EINVAL;
@@ -128,9 +130,10 @@ int dequeue(Queue *q, int *out) {
     if (q->front == NULL)
         return -1;
 
+    /* Save front node */
     QueueNode *victim = q->front;
     if (out != NULL)
-        *out = q->value;
+        *out = victim->data;
 
     q->front = victim->next;
     /* If queue is a single node then front now points to NULL and rear points
@@ -138,13 +141,14 @@ int dequeue(Queue *q, int *out) {
     if (q->size == 1)
         q->rear = NULL;
 
-    /* All safe to free and decrement. */
+    /* All safe to free and decrement. Note: we do not free data.
+     * Caller owns the memory for data. */
     free(victim);
     q->size--;
     return 0;
 }
 
-/* Free an entire queue. */
+/* Free an entire queue. This function does not free a node's data.*/
 void queue_destroy(Queue *q) {
     /* Input Validation */
     if (q == NULL) {

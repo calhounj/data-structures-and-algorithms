@@ -4,9 +4,9 @@ SRC_DIR = src
 TEST_DIR = tests
 
 QUEUE_OBJ = $(SRC_DIR)/queue.o
-TEST_QUEUE_OBJ = $(TEST_DIR)/test_queue.o
+TEST_QUEUE_OBJ = $(TEST_DIR)/test_gqueue.o
 
-TARGET = test_queue
+TARGET = test_gqueue
 
 .PHONY: all clean
 
@@ -18,7 +18,7 @@ $(TARGET): $(QUEUE_OBJ) $(TEST_QUEUE_OBJ)
 $(SRC_DIR)/queue.o: $(SRC_DIR)/queue.c include/queue.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(TEST_DIR)/test_queue.o: $(TEST_DIR)/test_queue.c include/queue.h
+$(TEST_DIR)/test_gqueue.o: $(TEST_DIR)/test_gqueue.c include/queue.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:

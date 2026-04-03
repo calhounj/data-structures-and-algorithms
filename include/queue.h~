@@ -6,7 +6,7 @@
 
 /* QueueNode */
 typedef struct queuenode {
-    int value;
+    void *data;
     struct queuenode *next;
 } QueueNode;
 
@@ -19,12 +19,13 @@ typedef struct queue {
 
 /* Inititalize an already-declared Queue */
 int queue_init(Queue *q);
-/* Add a new value to the rear of the queue */
-int enqueue(Queue *q, int val);
+/* Add a new data pointer to the rear of the queue */
+int enqueue(Queue *q, void *data);
 /* Remove the node at the front of the queue */
-/* Optionally store the value in *out */
-int dequeue(Queue *q, int *out);
-int queue_peek(const Queue *q, int *out);
+/* Optionally store the data in *out */
+int dequeue(Queue *q, void **out);
+int queue_peek(const Queue *q, void **out);
+/* Test whether queue has zero elements */
 int queue_is_empty(const Queue *q);
 size_t queue_size(const Queue *q);
 void queue_print(const Queue *q);
