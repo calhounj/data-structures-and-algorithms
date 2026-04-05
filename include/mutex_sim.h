@@ -22,9 +22,13 @@ typedef struct process {
     Queue inbox;
 } Process;
 
+/* Print function for a process */
+void print_process(Process *p);
 /* Initialize a process. Return -1 on failure and 0 on success. */
 int process_init(Process *p);
 /* Send a message. Return -1 on failure, 0 success */
 int send_message(Process *sender, Process *receiver, MessageType type);
+/* Receive a message. Return -1 on failure, 0 on success, 1 for empty inbox */
+int receive_message(Process *p, Message **out);
 
 #endif

@@ -3,6 +3,20 @@
 #include <errno.h>
 #include "mutex_sim.h"
 
+/* helper function for testing */
+void print_process(Process *p) {
+    if (p == NULL)
+        return;
+
+    /* Print id */
+    printf("Process %d ", p->id);
+    /* Print logical clock */
+    printf("clock=%d ", p->clock);
+    /* Print inbox size */
+    printf("inbox size=%ld\n", queue_size(&(p->inbox)));
+}
+
+
 /* process_init() initialized and already-declared simulated process.
  * Return 0 on success and -1 on failure.*/
 int process_init(Process *p) {
@@ -57,6 +71,73 @@ int send_message(Process *sender, Process *receiver, MessageType type) {
 
     return 0;
 }
+
+/* Given a process, remove one message from its inbox and update the clock.
+ * Return 0 on success, -1 on failure, and 1 if process inbox is empty.*/
+int receive_message(Process *p, Message **out) {
+    /* Input validation */
+    if (p == NULL || out == NULL) {
+        errno = EINVAL;
+        return -1;
+    }
+    /* ensure *out isn't left with garbage */
+    *out = NULL;
+
+    /* dequeue */
+    errno = 0;
+    void *temp = NULL;
+    Message *msg = NULL;
+    if (dequeue(&(p->inbox), &temp) == -1) {
+        if (errno != 0)
+            return -1;
+        else
+            return 1;       /* Empty queue */
+    }
+    else
+        msg = temp;/* void * casts automatically */
+
+    /* Update process clock Lamport style */
+    int p_clock = p->clock;
+    int m_timestamp = msg->timestamp;
+    if (p_clock >= m_timestamp)
+        p->clock = p_clock + 1;
+    else
+        p->clock = m_timestamp + 1;
+
+    /* Store Message * */
+    *out = msg;
+
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
