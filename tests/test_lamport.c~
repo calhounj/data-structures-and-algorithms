@@ -95,7 +95,7 @@ main(void)
         print_process(&processes[i]);
 
     for (i = 0; i < 3; i++)
-        queue_destroy_full(&processes[i].inbox, free);
+        queue_destroy_full(&processes[i].inbox);
 
     return 0;
 }
