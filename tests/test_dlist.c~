@@ -1,0 +1,106 @@
+/* Test file for doubly-linked list */
+#include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
+#include "dlist.h"
+
+int main() {
+
+    int retval;
+
+    printf("Initializing doubly-linked list...\n");
+    DList list;
+    retval = 0;
+    errno = 0;
+    retval = dlist_init(&list);
+    if (retval == -1) {
+        perror("dlist_init");
+        return EXIT_FAILURE;
+    }
+
+    printf("Confirming empty...\n");
+    if (dlist_is_empty(&list))
+        printf("Confirmed...\n");
+    else {
+        printf("Error with initialization, exiting program.\n");
+        return EXIT_FAILURE;
+    }
+
+    int x = 50;
+    printf("Pushing %d onto front of list...\n", x);
+    errno = 0;
+    if (dlist_push_front(&list, &x) == -1) {
+        perror("dlist_push_front");
+        return EXIT_FAILURE;
+    }
+
+    if (list.head != NULL && list.tail != NULL && list.head == list.tail
+        && list.head->prev == NULL && list.head->next == NULL
+        && list.head->data == &x)
+        printf("Successful push\n");
+
+    printf("Confirming list is not empty...\n");
+    if (!dlist_is_empty(&list)) {
+        printf("Success\n");
+    }
+    else {
+        printf("Error pushing\n");
+        return EXIT_FAILURE;
+    }
+
+    printf("Peeking at front of the list...\n");
+    void *out = NULL;
+    if (dlist_peek_front(&list, &out) == -1) {
+        perror("dlist_peek_front");
+        return EXIT_FAILURE;
+    }
+    int *data = out;
+    printf("Front node contains %d\n", *data);
+
+    printf("Confirming size is 1...\n");
+    size_t size = 0;
+    if (dlist_size(&list, &size) == -1) {
+        perror("dlist_size");
+        return EXIT_FAILURE;
+    }
+    printf("list size = %zu\n", size);
+
+    printf("Push to the back of the list...\n");
+    int y = 100;
+    if (dlist_push_back(&list, &y) == -1) {
+        perror("dlist_push_back");
+        return EXIT_FAILURE;
+    }
+
+    if (list.tail != NULL && list.head != NULL && list.head != list.tail
+        && list.tail->prev != NULL && list.tail->next == NULL
+        && list.tail->data == &y)
+        printf("Successful push\n");
+
+    printf("Peeking at back of the list...\n");
+    out = NULL;
+    if (dlist_peek_back(&list, &out) == -1) {
+        perror("dlist_peek_front");
+        return EXIT_FAILURE;
+    }
+    data = out;
+    printf("Back node contains %d\n", *data);
+
+    printf("Popping off the front...\n");
+    void *victim = NULL;
+
+    errno = 0;
+    if (dlist_pop_front(&list, &victim) == -1) {
+        perror("dlist_pop_front");
+        return EXIT_FAILURE;
+    }
+
+    int *out_data = victim;
+    assert(list.size == 1);
+    printf("Data stored in first node was %d\n", *out_data);
+
+
+
+
+    return EXIT_SUCCESS;
+}
