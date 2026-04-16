@@ -35,7 +35,14 @@ int dlist_peek_front(const DList *list, void **out);
 int dlist_peek_back(const DList *list, void **out);
 /* Pop the front of the list and retrieve the data. Free the node, not data */
 int dlist_pop_front(DList *list, void **out);
-
+/* Pop the back of the list and retrieve the data. Free the node, not data */
+int dlist_pop_back(DList *list, void **out);
+/* Destroy the entire list. -1 Fail, 0 Succeed */
+int dlist_destroy(DList *list, void (*free_fn)(void *));
+/* Remove a designated node from the list. Standard return values. */
+int dlist_remove_node(DList *list, DListNode *node, void **out);
+/* Wrapper for destroy */
+int dlist_clear(DList *list);
 
 
 

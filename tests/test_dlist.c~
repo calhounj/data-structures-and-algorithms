@@ -1,106 +1,519 @@
-/* Test file for doubly-linked list */
+#include <assert.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <errno.h>
+
 #include "dlist.h"
 
-int main() {
+/*
+ * Helper: verify the list invariants directly.
+ *
+ * Empty list:
+ *   head == NULL
+ *   tail == NULL
+ *   size == 0
+ *
+ * Non-empty list:
+ *   head != NULL
+ *   tail != NULL
+ *   head->prev == NULL
+ *   tail->next == NULL
+ *
+ * Also checks that the forward traversal count matches list->size.
+ */
+static void
+assert_list_invariants(const DList *list)
+{
+    assert(list != NULL);
 
-    int retval;
+    if (list->size == 0) {
+        assert(list->head == NULL);
+        assert(list->tail == NULL);
+        return;
+    }
 
-    printf("Initializing doubly-linked list...\n");
+    assert(list->head != NULL);
+    assert(list->tail != NULL);
+    assert(list->head->prev == NULL);
+    assert(list->tail->next == NULL);
+
+    size_t count = 0;
+    const DListNode *cur = list->head;
+    const DListNode *prev = NULL;
+
+    while (cur != NULL) {
+        assert(cur->prev == prev);
+        prev = cur;
+        cur = cur->next;
+        count++;
+    }
+
+    assert(prev == list->tail);
+    assert(count == list->size);
+}
+
+/* Helper: confirm dlist_size() matches an expected value. */
+static void
+assert_size(const DList *list, size_t expected)
+{
+    size_t actual = 0;
+    int rc = dlist_size(list, &actual);
+    assert(rc == 0);
+    assert(actual == expected);
+}
+
+/* Helper: initialize a list and verify empty invariants. */
+static void
+setup_empty_list(DList *list)
+{
+    int rc = dlist_init(list);
+    assert(rc == 0);
+    assert(dlist_is_empty(list) == 1);
+    assert_size(list, 0);
+    assert_list_invariants(list);
+}
+
+static void
+test_init_empty(void)
+{
     DList list;
-    retval = 0;
-    errno = 0;
-    retval = dlist_init(&list);
-    if (retval == -1) {
-        perror("dlist_init");
-        return EXIT_FAILURE;
-    }
+    setup_empty_list(&list);
+}
 
-    printf("Confirming empty...\n");
-    if (dlist_is_empty(&list))
-        printf("Confirmed...\n");
-    else {
-        printf("Error with initialization, exiting program.\n");
-        return EXIT_FAILURE;
-    }
+static void
+test_push_front_one(void)
+{
+    DList list;
+    setup_empty_list(&list);
 
-    int x = 50;
-    printf("Pushing %d onto front of list...\n", x);
-    errno = 0;
-    if (dlist_push_front(&list, &x) == -1) {
-        perror("dlist_push_front");
-        return EXIT_FAILURE;
-    }
+    int x = 10;
+    int rc = dlist_push_front(&list, &x);
+    assert(rc == 0);
 
-    if (list.head != NULL && list.tail != NULL && list.head == list.tail
-        && list.head->prev == NULL && list.head->next == NULL
-        && list.head->data == &x)
-        printf("Successful push\n");
+    assert(dlist_is_empty(&list) == 0);
+    assert_size(&list, 1);
+    assert_list_invariants(&list);
 
-    printf("Confirming list is not empty...\n");
-    if (!dlist_is_empty(&list)) {
-        printf("Success\n");
-    }
-    else {
-        printf("Error pushing\n");
-        return EXIT_FAILURE;
-    }
+    assert(list.head == list.tail);
+    assert(list.head->data == &x);
 
-    printf("Peeking at front of the list...\n");
     void *out = NULL;
-    if (dlist_peek_front(&list, &out) == -1) {
-        perror("dlist_peek_front");
-        return EXIT_FAILURE;
-    }
-    int *data = out;
-    printf("Front node contains %d\n", *data);
+    rc = dlist_peek_front(&list, &out);
+    assert(rc == 0);
+    assert(out == &x);
 
-    printf("Confirming size is 1...\n");
-    size_t size = 0;
-    if (dlist_size(&list, &size) == -1) {
-        perror("dlist_size");
-        return EXIT_FAILURE;
-    }
-    printf("list size = %zu\n", size);
-
-    printf("Push to the back of the list...\n");
-    int y = 100;
-    if (dlist_push_back(&list, &y) == -1) {
-        perror("dlist_push_back");
-        return EXIT_FAILURE;
-    }
-
-    if (list.tail != NULL && list.head != NULL && list.head != list.tail
-        && list.tail->prev != NULL && list.tail->next == NULL
-        && list.tail->data == &y)
-        printf("Successful push\n");
-
-    printf("Peeking at back of the list...\n");
     out = NULL;
-    if (dlist_peek_back(&list, &out) == -1) {
-        perror("dlist_peek_front");
-        return EXIT_FAILURE;
-    }
-    data = out;
-    printf("Back node contains %d\n", *data);
+    rc = dlist_peek_back(&list, &out);
+    assert(rc == 0);
+    assert(out == &x);
+}
 
-    printf("Popping off the front...\n");
-    void *victim = NULL;
+static void
+test_push_back_one(void)
+{
+    DList list;
+    setup_empty_list(&list);
+
+    int x = 20;
+    int rc = dlist_push_back(&list, &x);
+    assert(rc == 0);
+
+    assert(dlist_is_empty(&list) == 0);
+    assert_size(&list, 1);
+    assert_list_invariants(&list);
+
+    assert(list.head == list.tail);
+    assert(list.tail->data == &x);
+
+    void *out = NULL;
+    rc = dlist_peek_front(&list, &out);
+    assert(rc == 0);
+    assert(out == &x);
+
+    out = NULL;
+    rc = dlist_peek_back(&list, &out);
+    assert(rc == 0);
+    assert(out == &x);
+}
+
+static void
+test_push_front_then_back(void)
+{
+    DList list;
+    setup_empty_list(&list);
+
+    int a = 1;
+    int b = 2;
+
+    int rc = dlist_push_front(&list, &a);
+    assert(rc == 0);
+
+    rc = dlist_push_back(&list, &b);
+    assert(rc == 0);
+
+    assert_size(&list, 2);
+    assert_list_invariants(&list);
+
+    assert(list.head != list.tail);
+    assert(list.head->data == &a);
+    assert(list.tail->data == &b);
+    assert(list.head->next == list.tail);
+    assert(list.tail->prev == list.head);
+
+    void *out = NULL;
+    rc = dlist_peek_front(&list, &out);
+    assert(rc == 0);
+    assert(out == &a);
+
+    out = NULL;
+    rc = dlist_peek_back(&list, &out);
+    assert(rc == 0);
+    assert(out == &b);
+}
+
+static void
+test_push_back_then_back(void)
+{
+    DList list;
+    setup_empty_list(&list);
+
+    int a = 11;
+    int b = 22;
+    int c = 33;
+
+    int rc = dlist_push_back(&list, &a);
+    assert(rc == 0);
+    rc = dlist_push_back(&list, &b);
+    assert(rc == 0);
+    rc = dlist_push_back(&list, &c);
+    assert(rc == 0);
+
+    assert_size(&list, 3);
+    assert_list_invariants(&list);
+
+    assert(list.head->data == &a);
+    assert(list.head->next->data == &b);
+    assert(list.tail->data == &c);
+    assert(list.tail->prev->data == &b);
+
+    void *out = NULL;
+    rc = dlist_peek_front(&list, &out);
+    assert(rc == 0);
+    assert(out == &a);
+
+    out = NULL;
+    rc = dlist_peek_back(&list, &out);
+    assert(rc == 0);
+    assert(out == &c);
+}
+
+static void
+test_pop_front_singleton(void)
+{
+    DList list;
+    setup_empty_list(&list);
+
+    int x = 42;
+    int rc = dlist_push_front(&list, &x);
+    assert(rc == 0);
+
+    void *out = NULL;
+    rc = dlist_pop_front(&list, &out);
+    assert(rc == 0);
+    assert(out == &x);
+
+    assert(dlist_is_empty(&list) == 1);
+    assert_size(&list, 0);
+    assert_list_invariants(&list);
+}
+
+static void
+test_pop_back_singleton(void)
+{
+    DList list;
+    setup_empty_list(&list);
+
+    int x = 77;
+    int rc = dlist_push_back(&list, &x);
+    assert(rc == 0);
+
+    void *out = NULL;
+    rc = dlist_pop_back(&list, &out);
+    assert(rc == 0);
+    assert(out == &x);
+
+    assert(dlist_is_empty(&list) == 1);
+    assert_size(&list, 0);
+    assert_list_invariants(&list);
+}
+
+static void
+test_pop_front_multi(void)
+{
+    DList list;
+    setup_empty_list(&list);
+
+    int a = 100;
+    int b = 200;
+    int c = 300;
+
+    int rc = dlist_push_back(&list, &a);
+    assert(rc == 0);
+    rc = dlist_push_back(&list, &b);
+    assert(rc == 0);
+    rc = dlist_push_back(&list, &c);
+    assert(rc == 0);
+
+    void *out = NULL;
+    rc = dlist_pop_front(&list, &out);
+    assert(rc == 0);
+    assert(out == &a);
+
+    assert_size(&list, 2);
+    assert_list_invariants(&list);
+
+    assert(list.head->data == &b);
+    assert(list.tail->data == &c);
+    assert(list.head->prev == NULL);
+}
+
+static void
+test_pop_back_multi(void)
+{
+    DList list;
+    setup_empty_list(&list);
+
+    int a = 1000;
+    int b = 2000;
+    int c = 3000;
+
+    int rc = dlist_push_back(&list, &a);
+    assert(rc == 0);
+    rc = dlist_push_back(&list, &b);
+    assert(rc == 0);
+    rc = dlist_push_back(&list, &c);
+    assert(rc == 0);
+
+    void *out = NULL;
+    rc = dlist_pop_back(&list, &out);
+    assert(rc == 0);
+    assert(out == &c);
+
+    assert_size(&list, 2);
+    assert_list_invariants(&list);
+
+    assert(list.head->data == &a);
+    assert(list.tail->data == &b);
+    assert(list.tail->next == NULL);
+}
+
+static void
+test_error_cases(void)
+{
+    DList list;
+    setup_empty_list(&list);
+
+    void *out = NULL;
+    size_t sz = 0;
+    int rc;
 
     errno = 0;
-    if (dlist_pop_front(&list, &victim) == -1) {
-        perror("dlist_pop_front");
-        return EXIT_FAILURE;
-    }
+    rc = dlist_size(NULL, &sz);
+    assert(rc == -1);
+    assert(errno == EINVAL);
 
-    int *out_data = victim;
-    assert(list.size == 1);
-    printf("Data stored in first node was %d\n", *out_data);
+    errno = 0;
+    rc = dlist_size(&list, NULL);
+    assert(rc == -1);
+    assert(errno == EINVAL);
 
+    errno = 0;
+    rc = dlist_peek_front(&list, &out);
+    assert(rc == -1);
+    assert(errno == ENOENT);
 
+    errno = 0;
+    rc = dlist_peek_back(&list, &out);
+    assert(rc == -1);
+    assert(errno == ENOENT);
 
+    errno = 0;
+    rc = dlist_pop_front(&list, &out);
+    assert(rc == -1);
+    assert(errno == ENOENT);
 
+    errno = 0;
+    rc = dlist_pop_back(&list, &out);
+    assert(rc == -1);
+    assert(errno == ENOENT);
+}
+
+static void
+test_destroy_empty_list(void) {
+
+    DList list;
+    setup_empty_list(&list);
+
+    int rc;
+    rc = dlist_destroy(&list, NULL);
+    assert(rc == 0);
+    assert_list_invariants(&list);
+}
+
+static void
+test_destroy_nonempty_list(void) {
+
+    DList list;
+    setup_empty_list(&list);
+
+    int x = 10;
+    int y = 20;
+    int z = 30;
+
+    int rc;
+    rc = dlist_push_front(&list, &x);
+    assert(rc == 0);
+    assert_size(&list, 1);
+    rc = dlist_push_back(&list, &y);
+    assert(rc == 0);
+    assert_size(&list, 2);
+    rc = dlist_push_back(&list, &z);
+    assert(rc == 0);
+    assert_size(&list, 3);
+
+    rc = dlist_destroy(&list, NULL);
+    assert(rc == 0);
+    assert_list_invariants(&list);
+}
+
+/* Helper for cleanup callback */
+static void
+cleanup(void *ptr) {
+    free(ptr);
+}
+
+static void
+test_destroy_nonempty_list_cleanup(void) {
+
+    DList list;
+    setup_empty_list(&list);
+
+    int *x = malloc(sizeof(int));
+    assert(x != NULL);
+    int *y = malloc(sizeof(int));
+    assert(y != NULL);
+
+    *x = 100;
+    *y = 200;
+
+    int rc;
+    rc = dlist_push_front(&list, x);
+    assert(rc == 0);
+    assert_size(&list, 1);
+    rc = dlist_push_back(&list, y);
+    assert(rc == 0);
+    assert_size(&list, 2);
+    assert_list_invariants(&list);
+
+    rc = dlist_destroy(&list, cleanup);
+    assert(rc == 0);
+    assert_list_invariants(&list);
+}
+
+static void
+test_destroy_error(void) {
+
+    errno = 0;
+    int rc = dlist_destroy(NULL, NULL);
+    assert(rc == -1);
+    assert(errno == EINVAL);
+}
+
+static void
+test_remove_only_node() {
+
+    DList list;
+    setup_empty_list(&list);
+
+    int *x = malloc(sizeof(int));
+    assert(x != NULL);
+    *x = 10;
+
+    int rc = dlist_push_front(&list, x);
+    assert(rc == 0);
+    assert_size(&list, 1);
+
+    void *data;
+    rc = dlist_remove_node(&list, list.head, &data);
+    assert(rc == 0);
+    assert_size(&list, 0);
+    assert_list_invariants(&list);
+    int *out = data;
+    assert(*out == 10);
+
+    free(x);
+}
+
+static void
+test_remove_head(void) {
+
+    Dlist list;
+    setup_empty_list(&list);
+
+    int *x = malloc(sizeof(int));
+    assert(x != NULL);
+    *x = 10;
+    int *y = malloc(sizeof(int));
+    assert(y != NULL);
+    *y = 20;
+    int *z = malloc(sizeof(int));
+    assert(z != NULL);
+    *z = 30;
+
+    int rc;
+    rc = dlist_push_front(&list, x);
+    assert(rc == 0);
+    assert_size(&list, 1);
+    rc = dlist_push_back(&list, y);
+    assert(rc == 0);
+    assert_size(&list, 2);
+    rc = dlist_push_back(&list, z);
+    assert(rc == 0);
+    assert_size(&list, 3);
+
+    void *out;
+    rc = dlist_remove_node(&list, list.head, &out);
+    assert(rc == 0);
+    assert_size(&list, 2);
+    assert_list_invariants(&list);
+    int *data = out;
+    assert(*data == 10);
+
+    free(x);
+    free(y);
+    free(z);
+}
+
+int
+main(void)
+{
+    test_init_empty();
+    test_push_front_one();
+    test_push_back_one();
+    test_push_front_then_back();
+    test_push_back_then_back();
+    test_pop_front_singleton();
+    test_pop_back_singleton();
+    test_pop_front_multi();
+    test_pop_back_multi();
+    test_error_cases();
+    test_destroy_empty_list();
+    test_destroy_nonempty_list();
+    test_destroy_nonempty_list_cleanup();
+    test_destroy_error();
+    test_remove_only_node();
+    test_remove_head();
+
+    printf("All dlist tests passed.\n");
     return EXIT_SUCCESS;
 }
