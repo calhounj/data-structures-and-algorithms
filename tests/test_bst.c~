@@ -1,0 +1,20 @@
+#include <stdio.h>
+#include <assert.h>
+#include <errno.h>
+#include "bst.h"
+
+
+int
+main() {
+
+    test_insert();
+    test_search();
+    test_delete_leaf();
+    test_delete_one_child();
+    test_delete_two_children();
+    test_min_max();
+    test_inorder_sorted();
+
+    printf("bst passed all tests\n");
+    return 0;
+}

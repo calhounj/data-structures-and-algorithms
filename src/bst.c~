@@ -1,0 +1,183 @@
+#include <stdlib.h>
+#include <errno.h>
+#include "bst.h"
+
+/* Initialize a BST */
+int bst_init(BST *tree) {
+    if (tree == NULL) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    tree->root = NULL;
+    tree->size = 1;
+    return 0;
+}
+
+/* Helper function for creating nodes */
+static BSTNode *node_create(int key) {
+
+    BSTNode *node = malloc(sizeof(*node));
+    if (node != NULL) {
+        node->key = key;
+        node->left = NULL;
+        node->right = NULL;
+    }
+    return node;
+}
+
+/* Insert a node into a BST. Standard error codes. Iterator style.
+ * If the node is a duplicate, then do nothing and return success.*/
+int bst_insert(BST *tree, int key) {
+    if (tree == NULL) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    BSTNode *node = node_create(key);
+    if (node == NULL)
+        return -1;
+
+    /* Empty tree */
+    if (tree->root == NULL) {
+        tree->root = node;
+        tree->size++;
+    }
+    else {
+        /* Initialize traversal and parent pointer and walk the tree */
+        BSTNode *parent = NULL;
+        BSTNode *current = tree->root;
+        while (current != NULL) {
+            parent = current;
+            if (key < current->key)
+                current = current->left;
+            else if (key > current->key)
+                current = current->right;
+            else {          /* Node is already in the tree */
+                free(node);
+                return 0;   /* Not an error, do nothing */
+            }
+        }
+
+        if (key < parent->key)
+            parent->left = node;
+        else
+            parent->right = node;
+        tree->size++;
+    }
+    return 0;
+}
+
+/* Search the tree and return the node. If the node is not in the tree
+ * then return NULL. The caller is expected to pass a correct tree since
+ * if the tree is not present the function will return NULL as well. */
+BSTNode *bst_search(const BST *tree, int key) {
+    if (tree == NULL)
+        return NULL;
+
+    BSTNode *current = tree->root;
+    while (current != NULL) {
+        if (current->key == key)
+            return current;
+        else if (key < current->key)
+            current = current->left;
+        else
+            current = current->right;
+    }
+
+    return current;
+}
+
+/* Find the minimum value in the BST. The integer is stored in *out.
+ * Standard error codes. */
+int bst_min(const BST *tree, int *out) {
+    if (tree == NULL || out == NULL) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    const BSTNode *current = tree->root;
+    if (current == NULL) {
+        errno = ENOENT;
+        return -1;
+    }
+
+    while (current->left != NULL)
+        current = current->left;
+    *out = current->key;
+    return 0;
+}
+
+/* Find the maximum value in the BST. Store the data in out.
+ * Standard error codes. */
+int bst_max(const BST *tree, int *out) {
+    if (tree == NULL || out == NULL) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    const BSTNode *current = tree->root;
+    if (current == NULL) {
+        errno = ENOENT;
+        return -1;
+    }
+
+    while (current->right != NULL)
+        current = current->right;
+    *out = current->key;
+    return 0;
+}
+
+/* Helper function for bst_destroy */
+static void destroy_subtree(BSTNode *node) {
+    if (node == NULL)
+        return;
+    destroy_subtree(node->left);
+    destroy_subtree(node->right);
+    free(node);
+}
+
+/* Destroy a BST. If the caller passes a NULL tree, do nothing. */
+void bst_destroy(BST *tree) {
+
+    if (tree == NULL)
+        return;
+    destroy_subtree(tree->root);
+    tree->root = NULL;
+    tree->size = 0;
+}
+
+/* Helper function for bst_inorder */
+static void inorder_subtree(const BSTNode *node, void (*visit)(int key)) {
+    if (node == NULL)
+        return;
+    inorder_subtree(node->left, visit);
+    visit(node->key);
+    inorder_subtree(node->right, visit);
+}
+
+/* bst_inorder will traverse a BST inorder. It carries a function
+ * that it can perform operations with. */
+void bst_inorder(const BST *tree, void (*visit)(int key)) {
+    if (tree == NULL || visit == NULL)
+        return;
+    inorder_subtree(tree->root, visit);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

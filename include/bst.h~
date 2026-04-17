@@ -1,0 +1,38 @@
+#ifndef BST_H
+#define BST_H
+
+#include <stddef.h>
+
+typedef struct bst_node {
+    int key;
+    struct bst_node *left;
+    struct bst_node *right;
+} BSTNode;
+
+typedef struct bst {
+    BSTNode *root;
+    size_t size;
+} BST;
+
+/* Initialization */
+int bst_init(BST *tree);
+
+/* Core operations */
+int bst_insert(BST *tree, int key);
+BSTNode *bst_search(BST *tree, int key);
+int bst_delete(BST *tree, int key);
+
+/* Queries */
+int bst_min(const BST *tree, int *out);
+int bst_max(const BST *tree, int *out);
+
+size_t bst_size(const BST *tree);
+
+/* Traversal */
+void bst_inorder(const BST *tree,
+                 void (*visit)(int key));
+
+/* Cleanup */
+void bst_destroy(BST *tree);
+
+#endif

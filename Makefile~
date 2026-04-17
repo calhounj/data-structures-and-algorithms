@@ -30,6 +30,9 @@ test_dlist: $(DLIST_OBJ) $(TEST_DLIST_OBJ)
 $(SRC_DIR)/dlist.o: $(SRC_DIR)/dlist.c include/dlist.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
+$(TEST_DIR)/test_dlist.o: $(TEST_DIR)/test_dlist.c include/dlist.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
 $(SRC_DIR)/queue.o: $(SRC_DIR)/queue.c include/queue.h
 	$(CC) $(CFLAGS) -c $< -o $@
 

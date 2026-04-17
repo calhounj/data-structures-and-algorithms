@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -g -Iinclude
+CFLAGS = -Wall -Wextra -g -std=c17 -Iinclude
 
 SRC_DIR = src
 TEST_DIR = tests
@@ -7,12 +7,14 @@ TEST_DIR = tests
 QUEUE_OBJ = $(SRC_DIR)/queue.o
 MUTEX_SIM_OBJ = $(SRC_DIR)/mutex_sim.o
 DLIST_OBJ = $(SRC_DIR)/dlist.o
+BST_OBJ = $(SRC_DIR)/bst.o
 
 TEST_GQUEUE_OBJ = $(TEST_DIR)/test_gqueue.o
 TEST_LAMPORT_OBJ = $(TEST_DIR)/test_lamport.o
 TEST_DLIST_OBJ = $(TEST_DIR)/test_dlist.o
+TEST_BST_OBJ = $(TEST_DIR)/test_bst.o
 
-TARGETS = test_gqueue test_lamport_clock test_dlist
+TARGETS = test_gqueue test_lamport_clock test_dlist test_bst
 
 .PHONY: all clean
 
@@ -26,6 +28,12 @@ test_lamport: $(QUEUE_OBJ) $(MUTEX_SIM_OBJ) $(TEST_LAMPORT_OBJ)
 
 test_dlist: $(DLIST_OBJ) $(TEST_DLIST_OBJ)
 	$(CC) $(CFLAGS) -o $@ $(DLIST_OBJ) $(TEST_DLIST_OBJ)
+
+test_bst: $(TEST_BST_OBJ) $(BST_OBJ)
+	$(CC) $(CFLAGS) -o $@ $(BST_OBJ) $(TEST_BST_OBJ)
+
+$(BST_OBJ): $(SRC_DIR)/bst.c include/bst.h
+	$(CC) $(CFLAGS) -c src/bst.c -o src/bst.o
 
 $(SRC_DIR)/dlist.o: $(SRC_DIR)/dlist.c include/dlist.h
 	$(CC) $(CFLAGS) -c $< -o $@
