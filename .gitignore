@@ -1,4 +1,34 @@
-*.o
+# executables
 *.out
+*.exe
+test_bst
+a.out
+
+# object files
+*.o
+
+# dependency files
+*.d
+
+# static libraries
+*.a
+
+# shared libraries
+*.so
+
+# backup files (Vim etc.)
+*~
 *.swp
-*.bak
+*.swo
+
+# macOS junk (safe even on Linux)
+.DS_Store
+
+# build directories (if you add later)
+build/
+bin/
+
+# coverage files (future-proofing)
+*.gcno
+*.gcda
+*.gcov

@@ -10,7 +10,7 @@ int bst_init(BST *tree) {
     }
 
     tree->root = NULL;
-    tree->size = 1;
+    tree->size = 0;
     return 0;
 }
 
@@ -137,6 +137,7 @@ static void destroy_subtree(BSTNode *node) {
     free(node);
 }
 
+
 /* Destroy a BST. If the caller passes a NULL tree, do nothing. */
 void bst_destroy(BST *tree) {
 
@@ -156,13 +157,100 @@ static void inorder_subtree(const BSTNode *node, void (*visit)(int key)) {
     inorder_subtree(node->right, visit);
 }
 
-/* bst_inorder will traverse a BST inorder. It carries a function
- * that it can perform operations with. */
+/* bst_inorder will traverse a BST inorder. It calls visit on each key. */
 void bst_inorder(const BST *tree, void (*visit)(int key)) {
     if (tree == NULL || visit == NULL)
         return;
     inorder_subtree(tree->root, visit);
 }
+
+/* Report size of a BST */
+size_t bst_size(const BST *tree) {
+    if (tree == NULL)
+        return 0;
+    else
+        return tree->size;
+}
+
+/* Helper for bst_delete */
+static void replace_child(BST *tree, BSTNode *parent,
+                          BSTNode *node, BSTNode *new_child) {
+    if (parent == NULL) /* node is the root */
+        tree->root = new_child;
+    else if (parent->left == node)
+        parent->left = new_child;
+    else
+        parent->right = new_child;
+}
+
+/* A specific successor function: Find the leftmost node of this subtree
+ * along with its parent.*/
+static BSTNode *find_min_node(BSTNode *subtree_root, BSTNode **parent_out) {
+    /* Walk down to the left.*/
+    *parent_out = NULL;
+    BSTNode *node = subtree_root;
+    while (node->left != NULL) {
+        *parent_out = node;
+        node = node->left;
+    }
+    return node;
+}
+
+/* Delete a node from the BST. Must maintain invariants.
+ * Return -1 on failure, or 0 on success.*/
+int bst_delete(BST *tree, int key) {
+    if (tree == NULL) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    BSTNode *parent = NULL;
+    BSTNode *current = tree->root;
+    while (current != NULL && current->key != key) {
+        parent = current;
+        if (key < current->key)
+            current = current->left;
+        else
+            current = current->right;
+    }
+
+    /* Current is either:
+     * 1. NULL, the requested node is not in the tree
+     * 2. The node to delete. */
+    if (current == NULL) {
+        errno = ENOENT;
+        return -1;
+    }
+
+    /* Current needs to be deleted. Parent points to parent of
+     * current or is NULL because current is the root.
+     * Helper function works if we are deleting the root node with no children.
+     * We will end up with an empty tree.
+     * Case 1: Current is a leaf node.
+     * Case 2: Current has one child.
+     * Case 3: Current has two children.*/
+    if (current->left == NULL && current->right == NULL)
+        replace_child(tree, parent, current, NULL);
+    else if (current->left == NULL)
+        replace_child(tree, parent, current, current->right);
+    else if (current->right == NULL)
+        replace_child(tree, parent, current, current->left);
+    else {
+        BSTNode *parent_out;
+        BSTNode *successor = find_min_node(current->right, &parent_out);
+        current->key = successor->key;
+        if (successor->right != NULL)
+            replace_child(tree, parent_out, successor, successor->right);
+        free(successor);
+        tree->size--;
+        return 0;
+    }
+
+    free(current);
+    tree->size--;
+    return 0;
+}
+
 
 
 
