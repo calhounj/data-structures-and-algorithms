@@ -31,6 +31,9 @@ size_t bst_size(const BST *tree);
 /* Traversal */
 void bst_inorder(const BST *tree,
                  void (*visit)(int key));
+void bst_preorder(const BST *tree, void (*visit)(int key));
+/* BFS using my generic queue */
+void bst_levelorder(const BST *tree, void (*visit)(int key));
 
 /* Cleanup */
 void bst_destroy(BST *tree);

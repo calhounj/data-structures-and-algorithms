@@ -19,7 +19,7 @@ int bst_init(BST *tree);
 
 /* Core operations */
 int bst_insert(BST *tree, int key);
-BSTNode *bst_search(BST *tree, int key);
+BSTNode *bst_search(const BST *tree, int key);
 int bst_delete(BST *tree, int key);
 
 /* Queries */
@@ -31,6 +31,7 @@ size_t bst_size(const BST *tree);
 /* Traversal */
 void bst_inorder(const BST *tree,
                  void (*visit)(int key));
+void bst_preorder(const BST *tree, void (*visit)(int key));
 
 /* Cleanup */
 void bst_destroy(BST *tree);

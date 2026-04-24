@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include "bst.h"
+#include "queue.h"
 
 /* Initialize a BST */
 int bst_init(BST *tree) {
@@ -164,6 +165,22 @@ void bst_inorder(const BST *tree, void (*visit)(int key)) {
     inorder_subtree(tree->root, visit);
 }
 
+/* Helper function for bst_preorder */
+static void preorder_subtree(const BSTNode *node, void (*visit)(int key)) {
+    if (node == NULL)
+        return;
+    visit(node->key);
+    preorder_subtree(node->left, visit);
+    preorder_subtree(node->right, visit);
+}
+
+/* Preorder wrapper */
+void bst_preorder(const BST *tree, void (*visit)(int key)) {
+    if (tree == NULL || visit == NULL)
+        return;
+    preorder_subtree(tree->root, visit);
+}
+
 /* Report size of a BST */
 size_t bst_size(const BST *tree) {
     if (tree == NULL)
@@ -249,7 +266,33 @@ int bst_delete(BST *tree, int key) {
     return 0;
 }
 
+/* BFS */
+void bst_levelorder(const BST *tree, void (*visit)(int key)) {
+    if (tree == NULL || visit == NULL)
+        return;
 
+    if (tree->root == NULL)
+        return;
+
+    /* Initialize a queue */
+    Queue q;
+    queue_init(&q);
+
+    /* Enqueue the root */
+    enqueue(&q, tree->root);
+    while (!queue_is_empty(&q)) {
+        void *out = NULL;
+        dequeue(&q, &out);
+        BSTNode *node = out;
+        visit(node->key);
+        if (node->left != NULL)
+            enqueue(&q, node->left);
+        if (node->right != NULL)
+            enqueue(&q, node->right);
+    }
+
+    queue_destroy_full(&q, NULL);
+}
 
 
 

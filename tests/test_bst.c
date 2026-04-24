@@ -418,6 +418,67 @@ static void test_delete_node(void) {
 }
 
 /* ------------------------------------------------------------------
+ * Preorder traversal tests
+ * ------------------------------------------------------------------ */
+
+static void test_preorder_empty_tree(void) {
+    BST tree;
+
+    assert(bst_init(&tree) == 0);
+
+    reset_visited();
+    bst_preorder(&tree, record_key);
+
+    assert(visited_count == 0);
+
+    bst_destroy(&tree);
+}
+
+static void test_preorder_sorted_output(void) {
+    BST tree;
+
+    assert(bst_init(&tree) == 0);
+    assert(bst_insert(&tree, 10) == 0);
+    assert(bst_insert(&tree, 5) == 0);
+    assert(bst_insert(&tree, 20) == 0);
+    assert(bst_insert(&tree, 3) == 0);
+    assert(bst_insert(&tree, 7) == 0);
+    assert(bst_insert(&tree, 15) == 0);
+    assert(bst_insert(&tree, 30) == 0);
+
+    reset_visited();
+    bst_preorder(&tree, record_key);
+
+    assert(visited_count == 7);
+    assert(visited[0] == 10);
+    assert(visited[1] == 5);
+    assert(visited[2] == 3);
+    assert(visited[3] == 7);
+    assert(visited[4] == 20);
+    assert(visited[5] == 15);
+    assert(visited[6] == 30);
+
+    bst_destroy(&tree);
+}
+
+static void test_preorder_null_args(void) {
+    BST tree;
+
+    assert(bst_init(&tree) == 0);
+
+    reset_visited();
+    bst_preorder(NULL, record_key);
+    assert(visited_count == 0);
+
+    reset_visited();
+    bst_preorder(&tree, NULL);
+    assert(visited_count == 0);
+
+    bst_destroy(&tree);
+}
+
+
+/* ------------------------------------------------------------------
  * main
  * ------------------------------------------------------------------ */
 
@@ -452,6 +513,9 @@ int main(void) {
 
     /* My tests now */
     RUN_TEST(test_delete_node);
+    RUN_TEST(test_preorder_empty_tree);
+    RUN_TEST(test_preorder_sorted_output);
+    RUN_TEST(test_preorder_null_args);
 
     printf("\n%d/%d tests passed\n", tests_passed, tests_run);
     return EXIT_SUCCESS;
